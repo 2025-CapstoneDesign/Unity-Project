@@ -24,11 +24,9 @@ public class AEDManager : MonoBehaviour
         Completed
     }
 
-    [SerializeField] private SensorManager sensorManager;
     private CPRState currentState;
     private bool externalInput;  // 외부 입력값 (True/False)
     private WhisperManager whisperManager;
-    private LLMManager llmManager;
 
     void Start()
     {
@@ -45,16 +43,7 @@ public class AEDManager : MonoBehaviour
         {
             Debug.LogError("WhisperManager not found!");
         }
-        llmManager = new LLMManager();
-        StartLLMServer();
         StartCoroutine(CPRProcedure());
-    }
-
-    private async void StartLLMServer()
-    {
-        Debug.Log("Starting LLM server on port");
-        await llmManager.ConnectToServer();
-        Debug.Log("LLM server started successfully.");
     }
 
     // 외부에서 입력받는 메서드
@@ -73,18 +62,12 @@ public class AEDManager : MonoBehaviour
                     Debug.Log("1. 현장 안전을 확인한다.");
                     whisperManager.GenerateRandomInput();
                     yield return StartCoroutine(WaitForInput());
-                    llmManager.setType("현장안전확인");
-                    while (!llmManager.getIsValid())
-                    {
-                        yield return null;
-                    }
                     break;
 
                 case CPRState.WearPPE:
                     Debug.Log("2. 감염 방지를 위한 개인보호장구를 착용한다.");
                     whisperManager.GenerateRandomInput();
                     yield return StartCoroutine(WaitForInput());
-
                     break;
 
                 case CPRState.CheckConsciousness:
@@ -107,13 +90,6 @@ public class AEDManager : MonoBehaviour
 
                 case CPRState.ChestCompressions:
                     Debug.Log("6. 가슴압박을 30회 실시한다.");
-                    CPRManager cprManager = new CPRManager(sensorManager);
-                    while (!cprManager.IsCPRPassed)
-                    {
-                        Debug.Log("wait 프레임");
-                        yield return null; // 다음 프레임 대기
-                    }
-                    Debug.Log("CPR 통과!!!!!!!!!!!!");
                     whisperManager.GenerateRandomInput();
                     yield return StartCoroutine(WaitForInput());
                     break;
