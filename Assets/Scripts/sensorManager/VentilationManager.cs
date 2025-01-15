@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MariaDb : MonoBehaviour
+public class VentilationManager : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
