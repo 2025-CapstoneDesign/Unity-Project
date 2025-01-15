@@ -24,7 +24,7 @@ public class WhisperManager : MonoBehaviour
             }
             RandomInputGenerated?.Invoke(randomInput);  // 이벤트 호출
 
-            yield return new WaitForSeconds(10f);  // 1초 간격으로 값 생성
+            yield return new WaitForSeconds(1f);  // 1초 간격으로 값 생성
         }
     }
 }
