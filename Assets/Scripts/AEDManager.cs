@@ -25,10 +25,12 @@ public class AEDManager : MonoBehaviour
     }
 
     [SerializeField] private SensorManager sensorManager;
+    [SerializeField] private TimerManager timerManager; // 타이머 매니저 추가
     private CPRState currentState;
     private bool externalInput;  // 외부 입력값 (True/False)
     private WhisperManager whisperManager;
     private LLMManager llmManager;
+    private float timeLimit;
 
     void Start()
     {
@@ -74,16 +76,45 @@ public class AEDManager : MonoBehaviour
                     whisperManager.GenerateRandomInput();
                     yield return StartCoroutine(WaitForInput());
                     llmManager.setType("현장안전확인");
-                    while (!llmManager.getIsValid())
+
+                    // 여기에 타이머 반복문을 넣어줘! 
+
+                    // 해당 상태에 대한 제한 시간 설정
+                    timeLimit = GetStateTimeLimit(currentState);
+                    timerManager.StartTimer(timeLimit);
+
+                    // 🔹 타이머 반복문 추가
+                    while (!timerManager.IsTimeUp())
                     {
-                        yield return null;
+                        yield return null;  // 매 프레임 대기
                     }
+
+                    if (timerManager.IsTimeUp())
+                    {
+                        HandleTimeoutMessage();
+                    }
+                    
                     break;
 
                 case CPRState.WearPPE:
                     Debug.Log("2. 감염 방지를 위한 개인보호장구를 착용한다.");
                     whisperManager.GenerateRandomInput();
                     yield return StartCoroutine(WaitForInput());
+
+                    timeLimit = GetStateTimeLimit(currentState);
+                    timerManager.StartTimer(timeLimit);
+
+                    // 🔹 타이머 반복문 추가
+                    while (!timerManager.IsTimeUp())
+                    {
+                        yield return null;  // 매 프레임 대기
+                    }
+
+                    if (timerManager.IsTimeUp())
+                    {
+                        HandleTimeoutMessage();
+                        yield break;  // 시간 초과 시 종료
+                    }
 
                     break;
 
@@ -193,5 +224,45 @@ public class AEDManager : MonoBehaviour
         // 외부 입력이 true일 경우, 다음 단계로 넘어감
         externalInput = false;  // 입력을 받은 후, 상태를 초기화하여 재시도하지 않도록 함
         currentState++;  // 다음 단계로 넘어감
+    }
+
+
+    private IEnumerator WaitForInputOrTimeout()
+    {
+        while (!externalInput && !timerManager.IsTimeUp())
+        {
+            yield return null;
+        }
+
+        externalInput = false;
+    }
+
+    private void HandleTimeoutMessage()
+    {
+        Debug.Log($"🚨 {currentState} 단계에서 시간 초과! 조치 필요.");
+    }
+
+    private float GetStateTimeLimit(CPRState state)
+    {
+        switch (state)
+        {
+            case CPRState.CheckSafety: return 5f;
+            case CPRState.WearPPE: return 20f;
+            case CPRState.CheckConsciousness: return 5f;
+            case CPRState.Call119AndRequestAED: return 10f;
+            case CPRState.CheckBreathingAndPulse: return 7f;
+            case CPRState.ChestCompressions: return 15f;
+            case CPRState.OpenAirway: return 5f;
+            case CPRState.ProvideRescueBreaths: return 6f;
+            case CPRState.ContinueCPR: return 30f;
+            case CPRState.DirectAssistants: return 10f;
+            case CPRState.TurnOnAED: return 5f;
+            case CPRState.AttachPads: return 8f;
+            case CPRState.ClearArea: return 4f;
+            case CPRState.DeliverShock: return 3f;
+            case CPRState.ResumeChestCompressions: return 12f;
+            case CPRState.RecordDocuments: return 10f;
+            default: return 0f;
+        }
     }
 }
