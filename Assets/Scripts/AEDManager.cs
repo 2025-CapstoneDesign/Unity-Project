@@ -1,29 +1,9 @@
 using System.Collections;
 using UnityEngine;
+using TMPro;
 
 public class AEDManager : MonoBehaviour
 {
-    private enum CPRState
-    {
-        CheckSafety,
-        WearPPE,
-        CheckConsciousness,
-        Call119AndRequestAED,
-        CheckBreathingAndPulse,
-        ChestCompressions,
-        OpenAirway,
-        ProvideRescueBreaths,
-        ContinueCPR,
-        DirectAssistants,
-        TurnOnAED,
-        AttachPads,
-        ClearArea,
-        DeliverShock,
-        ResumeChestCompressions,
-        RecordDocuments,
-        Completed
-    }
-
     [SerializeField] private SensorManager sensorManager;
     [SerializeField] private TimerManager timerManager; // 타이머 매니저 추가
     private CPRState currentState;
@@ -31,6 +11,9 @@ public class AEDManager : MonoBehaviour
     private WhisperManager whisperManager;
     private LLMManager llmManager;
     private float timeLimit;
+
+
+    [SerializeField] private TextMeshProUGUI aedMessageText;
 
     void Start()
     {
@@ -69,6 +52,7 @@ public class AEDManager : MonoBehaviour
     {
         while (currentState != CPRState.Completed)
         {
+            aedMessageText.text = AEDMessageManager.GetMessage(currentState);
             switch (currentState)
             {
                 case CPRState.CheckSafety:
